@@ -1,0 +1,372 @@
+﻿<div class="row">
+  <div class="col-md-2">
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <h4 class="text-center">
+          <b>Filters</b>
+          <span class="pull-right">
+            <button
+              class="btn btn-sm"
+              ng-click="solrSearchCtrl.resetFilters();solrSearchCtrl.search()"
+            >
+              <i class="fa fa-redo" uib-tooltip="Clear Filters"></i>
+            </button>
+          </span>
+        </h4>
+        <div class="clearfix"></div>
+      </div>
+
+      <div class="panel-body" id="solr-search-filters">
+        <!--<div class="text-center">
+                    <div class="btn-group btn-group-sm" id="btns" data-toggle="buttons">
+                        <label class="btn btn-info">
+                            <input type="radio" name="operator" autocomplete="off" ng-model="solrSearchCtrl.searchOptions.operator" value="AND">
+                            AND
+                            <i ng-if="solrSearchCtrl.searchOptions.operator === 'AND'" class="ml-5 fas fa-check"></i>
+                        </label>
+                        <label class="btn btn-primary">
+                            <input type="radio" name="operator" autocomplete="off" ng-model="solrSearchCtrl.searchOptions.operator" value="OR">
+                            OR
+                            <i ng-if="solrSearchCtrl.searchOptions.operator === 'OR'" class="ml-5 fas fa-check"></i>
+                        </label>
+                    </div>
+                </div>-->
+
+        <div ng-repeat="facet in solrSearchCtrl.termsFacetsList">
+          <div
+            class="list-group-item mt-5"
+            ng-if="!solrSearchCtrl.isEmptyObject(facet.value)"
+          >
+            <h5
+              ng-click="solrSearchCtrl.collapsedFacets[facet.name] = !solrSearchCtrl.collapsedFacets[facet.name]"
+            >
+              <b>{{ facet.name | titleCase: true }}</b>
+              <span class="pull-right mr-5">
+                <i class="fa fa-chevron-down"></i>
+              </span>
+            </h5>
+
+            <div class="clearfix"></div>
+
+            <div
+              class="list-group-item"
+              ng-show="solrSearchCtrl.collapsedFacets[facet.name]"
+            >
+              <div class="checkbox" ng-repeat="(name, value) in facet.value">
+                <label>
+                  <input
+                    type="checkbox"
+                    name="{{ name }}"
+                    ng-model="solrSearchCtrl.selectedFacets[facet.name+'_'+name]"
+                    ng-change="solrSearchCtrl.toggleFacet(facet,facet.name,name)"
+                  />
+                  {{ name | date: "yyyy" | titleCase: true }} ({{ value }})
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div ng-repeat="facet in solrSearchCtrl.dateRangeFacetsList">
+          <div
+            class="list-group-item mt-5"
+            ng-if="!solrSearchCtrl.isEmptyObject(facet.value)"
+          >
+            <h5
+              ng-click="solrSearchCtrl.collapsedFacets[facet.name] = !solrSearchCtrl.collapsedFacets[facet.name]"
+            >
+              <b>{{ facet.name | titleCase: true }}</b>
+              <span class="pull-right mr-5">
+                <i class="fa fa-chevron-down"></i>
+              </span>
+            </h5>
+
+            <div class="clearfix"></div>
+
+            <div
+              class="list-group-item"
+              ng-show="solrSearchCtrl.collapsedFacets[facet.name]"
+            >
+              <div class="checkbox" ng-repeat="dateObj in facet.value">
+                <label>
+                  <input
+                    type="checkbox"
+                    name="{{ dateObj.start }}"
+                    ng-model="solrSearchCtrl.selectedFacets[facet.name+'_'+dateObj.start]"
+                    ng-change="solrSearchCtrl.toggleFacet(facet,facet.name,dateObj.start)"
+                  />
+                  {{ dateObj.startStr }}
+                  <span ng-if="dateObj.end"> - {{ dateObj.endStr }}</span>
+                  ({{ dateObj.count }})
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-10">
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <div class="row mb-5 mt-5">
+          <div class="col-md-6 col-md-offset-3">
+            <form novalidate>
+              <div class="input-group input-group-sm">
+                <input
+                  type="text"
+                  class="form-control"
+                  placeholder="Search here..."
+                  name="query"
+                  id="query"
+                  ng-model="solrSearchCtrl.searchOptions.query"
+                  autofocus
+                />
+
+                <div class="input-group-btn" uib-dropdown auto-close="disabled">
+                  <button
+                    class="btn btn-info"
+                    type="submit"
+                    uib-tooltip="Search"
+                    ng-click="solrSearchCtrl.searchOptions.currentPage=1; solrSearchCtrl.search()"
+                  >
+                    <i class="fa fa-search"></i>
+                  </button>
+
+                  <button
+                    id="btn-append-to-single-button"
+                    type="button"
+                    class="btn btn-primary"
+                    uib-dropdown-toggle
+                  >
+                    Advanced Options
+                    <span class="ml-5 caret"></span>
+                  </button>
+                  <div
+                    class="dropdown-menu"
+                    uib-dropdown-menu
+                    role="menu"
+                    aria-labelledby="btn-append-to-single-button"
+                  >
+                    <div class="row mb-5 mt-5">
+                      <div class="col-sm-12">
+                        <div class="form-group form-group-sm">
+                          <label for="StartDateValue">Start Date</label>
+                          <input
+                            class="form-control"
+                            placeholder="Start Date"
+                            name="StartDateValue"
+                            id="StartDateValue"
+                            moment-picker="solrSearchCtrl.searchOptions.StartDateValue"
+                            autocomplete="off"
+                            max-date="solrSearchCtrl.today"
+                            ng-model="solrSearchCtrl.searchOptions.StartDate"
+                            min-date="solrSearchCtrl.minDate"
+                            format="DD/MM/YYYY"
+                          />
+                        </div>
+                      </div>
+                      <div class="col-sm-12">
+                        <div class="form-group form-group-sm">
+                          <label for="EndDateValue">End Date</label>
+                          <input
+                            class="form-control"
+                            placeholder="End Date"
+                            name="EndDateValue"
+                            id="EndDateValue"
+                            max-date="solrSearchCtrl.today"
+                            min-date="solrSearchCtrl.searchOptions.StartDateValue"
+                            moment-picker="solrSearchCtrl.searchOptions.EndDateValue"
+                            ng-model="solrSearchCtrl.searchOptions.EndDate"
+                            format="DD/MM/YYYY"
+                          />
+                        </div>
+                      </div>
+                      <div class="col-sm-12">
+                        <div class="form-group form-group-sm">
+                          <rzslider
+                            rz-slider-model="solrSearchCtrl.searchOptions.dateRangeGap"
+                            rz-slider-options="solrSearchCtrl.slider.options"
+                          ></rzslider>
+                        </div>
+                      </div>
+                      <div class="col-sm-12">
+                        <div class="form-group form-group-sm">
+                          <label for="unit">Unit</label>
+                          <select
+                            id="unit"
+                            class="form-control"
+                            ng-model="solrSearchCtrl.searchOptions.dateRangeUnit"
+                          >
+                            <option value="YEAR">Year</option>
+                            <option value="MONTH">Month</option>
+                            <option value="DAY">Day</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    class="btn btn-default"
+                    type="button"
+                    uib-tooltip="Reset"
+                    ng-click="solrSearchCtrl.searchOptions.currentPage=1;solrSearchCtrl.searchOptions.query=''; solrSearchCtrl.search()"
+                  >
+                    <!--ng-disabled="!solrSearchCtrl.searchOptions.query"-->
+                    <i class="fa fa-redo"></i>
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+
+          <div class="col-md-6 col-md-offset-3 mt-3">
+            <p class="help-block">
+              <!--Results without grouping Template-->
+              Showing {{ solrSearchCtrl.response.start + 1 }}-
+              {{
+                solrSearchCtrl.min(
+                  solrSearchCtrl.response.start +
+                    solrSearchCtrl.searchOptions.rows,
+                  solrSearchCtrl.response.numFound
+                )
+              }}
+              of {{ solrSearchCtrl.response.numFound }} results found
+              <!--Results with Grouping-->
+              <!--{{solrSearchCtrl.response.matches}} results found-->
+            </p>
+          </div>
+        </div>
+      </div>
+      <div>
+        <!-- Showing Stats from response -->
+        <!--<div class="panel panel-default">
+                    <div class="panel-body">
+                        <div class="row">
+                            <div class="col-md-2" ng-repeat="(field, value) in solrSearchCtrl.stats.stats_fields" ng-if="value.sum">
+                                <p>{{field | titleCase:true}}</p>
+                                <h4>{{value.sum}}</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>-->
+        <!--Results without grouping Template-->
+        <div
+          class="panel panel-default"
+          ng-repeat="(header, array) in solrSearchCtrl.response.docs"
+          ng-if="!solrSearchCtrl.isEmptyObject(solrSearchCtrl.response.docs[header])"
+        >
+          <div class="panel-heading">
+            <h5 class="text-center">
+              <b>{{ header | titleCase: true }} ({{ array.length }})</b>
+            </h5>
+          </div>
+          <div class="panel-body">
+            <div class="table-responsive">
+              <table class="table table-bordered table-condensed">
+                <thead>
+                  <tr>
+                    <th
+                      ng-if="solrSearchCtrl.isFieldVisible(header)"
+                      ng-repeat="(header, value) in array[0]"
+                    >
+                      {{ header | titleCase: true }}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr ng-repeat="row in array">
+                    <td
+                      ng-repeat="(colName, col) in row"
+                      ng-if="solrSearchCtrl.isFieldVisible(colName)"
+                    >
+                      {{ (col | formatIfDate) || " - " }}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-sm-9">
+            <ul
+              uib-pagination
+              items-per-page="solrSearchCtrl.searchOptions.rows"
+              total-items="solrSearchCtrl.response.numFound"
+              ng-model="solrSearchCtrl.searchOptions.currentPage"
+              max-size="5"
+              class="pagination-sm"
+              boundary-link-numbers="true"
+              ng-change="solrSearchCtrl.search()"
+            ></ul>
+          </div>
+
+          <div class="col-sm-3">
+            <div class="pull-right">
+              <div class="form-group form-group-sm">
+                <select
+                  class="form-control"
+                  uib-tooltip="Page Size"
+                  id="pageSize"
+                  ng-model="solrSearchCtrl.searchOptions.rows"
+                  ng-change="solrSearchCtrl.searchOptions.currentPage=1; solrSearchCtrl.search()"
+                >
+                  <option ng-value="5">5</option>
+                  <option ng-value="10">10</option>
+                  <option ng-value="25">25</option>
+                  <option ng-value="50">50</option>
+                </select>
+              </div>
+            </div>
+            <div class="clearfix"></div>
+          </div>
+        </div>
+
+        <h4
+          ng-if="!solrSearchCtrl.response.docs && solrSearchCtrl.response.docs.length"
+        >
+          No Results Found.
+        </h4>
+
+        <!--Results with grouping-->
+        <!--<div class="panel panel-default" ng-repeat="group in solrSearchCtrl.response.groups">
+                    <div class="panel-heading">
+                        <h5 class="text-center" ng-click="group.isCollapsed = !group.isCollapsed">
+                            <b>{{group.groupValue | titleCase:true}} ({{group.doclist.numFound}})</b>
+                            <span class="pull-right">
+                                <button class="btn btn-sm btn-primary">
+                                    View All
+                                </button>
+                            </span>
+                            <span class="clearfix"></span>
+                        </h5>
+                    </div>
+                    <div class="panel-body" uib-collapse="!group.isCollapsed">
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-condensed">
+                                <thead>
+                                    <tr>
+                                        <th ng-if="solrSearchCtrl.isFieldVisible(header)" ng-repeat="(header, value) in group.doclist.docs[0]">
+                                            {{header | titleCase:true}}
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr ng-repeat="row in group.doclist.docs">
+                                        <td ng-repeat="(colName, col) in row" ng-if="solrSearchCtrl.isFieldVisible(colName)">
+                                            {{(col | formatIfDate) || ' - '}}
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>-->
+      </div>
+    </div>
+  </div>
+</div>
